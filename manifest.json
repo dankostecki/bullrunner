@@ -2,11 +2,13 @@
   "name": "Bull Runner",
   "short_name": "BullRunner",
   "description": "Bull Runner",
-  "start_url": "index.html",
-  "display": "standalone",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "orientation": "landscape",
   "background_color": "#0f2027",
-  "theme_color": "#39FF14",
+  "theme_color": "#0f2027",
   "icons": [
     {
       "src": "icon.png",
