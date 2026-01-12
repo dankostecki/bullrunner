@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BULL RUNNER - Ultimate</title>
+    <title>BULL RUNNER - Mobile Production</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
@@ -290,10 +290,10 @@
             pointer-events: auto; overflow: hidden; 
         }
 
-        /* --- USUNIĘTO VIDEO - ZOSTAŁO TYLKO TŁO --- */
+        /* FIX: Usunięto odwołania do wideo, zostawiamy tło CSS */
         .video-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #050a10 0%, #0f2027 100%);
+            background: linear-gradient(135deg, rgba(5, 10, 16, 0.85) 0%, rgba(15, 32, 39, 0.9) 100%);
             z-index: 1;
         }
 
@@ -721,8 +721,18 @@
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this.ctx = new AudioContext();
                 }
-                if (this.ctx.state === 'suspended') {
-                    this.ctx.resume();
+                // Próba odblokowania, jeśli kontekst istnieje
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume().catch(e => console.log(e));
+                }
+            }
+
+            // FIX: Funkcja do odblokowania audio na mobile
+            unlockAudio() {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume().then(() => {
+                        console.log("Audio Context resumed by user gesture");
+                    });
                 }
             }
 
@@ -734,6 +744,10 @@
                 const volStep = (endVol - startVol) / steps;
                 let currentStep = 0;
                 audioEl.volume = startVol;
+                
+                // Upewniamy się, że audio jest odblokowane przed odtwarzaniem
+                this.unlockAudio(); 
+
                 if(endVol > 0 && audioEl.paused) {
                     audioEl.play().catch(e => console.log("Autoplay blocked:", e));
                 }
@@ -777,6 +791,9 @@
 
             playTone(freq, type, duration, vol = 0.1) {
                 if (!this.ctx || this.sfxVolume <= 0) return;
+                // Bezpiecznik audio
+                this.unlockAudio();
+
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 const finalVol = vol * this.sfxVolume;
@@ -803,6 +820,7 @@
 
             playPowerUp() {
                 if (!this.ctx || this.sfxVolume <= 0) return;
+                this.unlockAudio();
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 const startVol = 0.1 * this.sfxVolume;
@@ -833,9 +851,11 @@
         }
 
         let scene, camera, renderer;
-        // FIX: USUNIĘTO CUBECAMERA (Źródło błędów WebGL na telefonie)
+        // FIX: USUNIĘTO CUBECAMERA - TO ONA POWODOWAŁA BŁĘDY WEBGL NA TELEFONIE
         let buildingMaterial;
-        
+        let cubeUpdateCounter = 0;
+        let cubeUpdateEvery = 45;
+
         function performGPUWarmup() {
             if (!renderer || !scene || !camera) return;
             const warmGroup = new THREE.Group();
@@ -855,7 +875,7 @@
                 warmGroup.add(particle);
                 scene.add(warmGroup);
                 renderer.compile(scene, camera);
-                // FIX: Usunięto update cubeCamera
+                // FIX: Usunięto cubeCamera.update()
                 renderer.render(scene, camera);
                 scene.remove(warmGroup);
                 warmGroup.traverse(o => {
@@ -899,10 +919,10 @@
         function applyQuality(level) {
             qualityLevel = Math.max(0, Math.min(2, level));
             const dpr = window.devicePixelRatio || 1;
+            // FIX: Ograniczenie DPI dla telefonów
             if (qualityLevel === 2) {
-                // FIX: Usunięto cubeUpdateEvery
                 MAX_PARTICLES = reducedMotion ? 180 : 260;
-                renderer.setPixelRatio(Math.min(dpr, 2));
+                renderer.setPixelRatio(Math.min(dpr, 1.5));
             } else if (qualityLevel === 1) {
                 MAX_PARTICLES = 170;
                 renderer.setPixelRatio(Math.min(dpr, 1.5));
@@ -1011,10 +1031,13 @@
             try { document.getElementById('bgIntro')?.load(); } catch(e) {}
             try { document.getElementById('bgMusic')?.load(); } catch(e) {}
             try { document.getElementById('bgEnd')?.load(); } catch(e) {}
-            // FIX: USUNIĘTO ŁADOWANIE VIDEO
+            // FIX: Usunięto ładowanie bgVideo
             
             document.addEventListener('click', () => {
                 audioManager.init();
+                // FIX: Upewniamy się, że audio startuje po interakcji
+                audioManager.unlockAudio();
+                
                 if(!isPlaying && document.getElementById('bgIntro').paused && gameOverScreen.classList.contains('hidden')) {
                     audioManager.playIntro();
                 }
@@ -1022,6 +1045,12 @@
                     DeviceOrientationEvent.requestPermission().catch(console.error);
                 }
             }, { once: true });
+
+            // Dodatkowy listener dla mobile touch
+            document.addEventListener('touchstart', () => {
+                audioManager.init();
+                audioManager.unlockAudio();
+            }, { once: true, passive: true });
 
             scene = new THREE.Scene();
             scene.background = null; 
@@ -1041,9 +1070,9 @@
             renderer.toneMappingExposure = 1.1;
             document.getElementById('game-container').appendChild(renderer.domElement);
 
-            // FIX WebGL: Usunięto CubeCamera i RenderTarget
+            // FIX: Usunięto CubeCamera i RenderTarget
             
-            // FIX WebGL: Zmieniono materiał na MeshStandardMaterial (brak envMap)
+            // FIX: Zmieniono materiał na MeshStandardMaterial (bez envMap = brak błędu WebGL)
             buildingMaterial = new THREE.MeshStandardMaterial({
                 color: 0x2c3e50, metalness: 0.6, roughness: 0.2, emissive: 0x000510,     
             });
@@ -1057,10 +1086,10 @@
             scene.add(sunLight);
             
             const geometry = new THREE.PlaneGeometry(300, 600);
-            // FIX WebGL: Zmieniono na MeshStandardMaterial
+            // FIX: Materiał podłogi też zmieniony na bezpieczny
             const material = new THREE.MeshStandardMaterial({ 
-                color: 0x0a1128, roughness: 0.8, metalness: 0.2,
-                roughnessMap: createRoughnessTexture()
+                color: 0x0a1128, roughness: 0.4, roughnessMap: createRoughnessTexture(), 
+                metalness: 0.4 
             });
             ground = new THREE.Mesh(geometry, material);
             ground.rotation.x = -Math.PI / 2;
@@ -1205,7 +1234,7 @@
 
         class Particle3D {
             constructor(x, y, z, color) {
-                const size = 0.10 + Math.random() * 0.12;
+                const size = 0.15; // Mniejszy rozmiar zgodnie z życzeniem
                 this.mesh = new THREE.Mesh(Assets.geometries.particle, new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.75, depthWrite: false }));
                 this.mesh.scale.set(size, size, size); this.mesh.position.set(x, y, z);
                 this.vel = new THREE.Vector3((Math.random()-0.5)*0.6, Math.random()*0.6, (Math.random()-0.5)*0.6);
@@ -1300,7 +1329,12 @@
 
         function startGame() {
             if (window.matchMedia && window.matchMedia('(pointer:fine)').matches) document.body.requestPointerLock();
-            audioManager.init(); audioManager.transitionToGame();
+            
+            // FIX: Odblokowanie audio przy starcie
+            audioManager.init();
+            audioManager.unlockAudio();
+            audioManager.transitionToGame();
+
             document.body.style.cursor = 'none';
             if(document.getElementById('bgVideo')) document.getElementById('bgVideo').pause();
             obstacles.forEach(o => o.dispose()); obstacles = [];
@@ -1315,23 +1349,9 @@
                 const warmupOverlay = document.getElementById('warmupOverlay'); const barFill = document.getElementById('warmupBarFill');
                 warmupOverlay.classList.remove('hidden'); isPlaying = true; invulnerableUntil = performance.now() + 7000; 
                 
-                // FIX: Szybsze ładowanie (co 50ms dodajemy 4% = ok 1.25 sekundy)
-                let progress = 0; 
-                const interval = setInterval(() => { 
-                    progress += 4; 
-                    if(progress > 100) progress = 100; 
-                    barFill.style.width = progress + '%'; 
-                }, 50);
-                
-                // FIX: Timeout skrócony z 6000 do 2000 ms
-                setTimeout(() => { 
-                    clearInterval(interval); 
-                    warmupOverlay.style.opacity = '0'; 
-                    setTimeout(() => { 
-                        warmupOverlay.classList.add('hidden'); 
-                        isFirstLaunch = false; 
-                    }, 500); 
-                }, 2000); 
+                // FIX: Szybsze ładowanie (1s)
+                let progress = 0; const interval = setInterval(() => { progress += 4; if(progress > 100) progress = 100; barFill.style.width = progress + '%'; }, 50);
+                setTimeout(() => { clearInterval(interval); warmupOverlay.style.opacity = '0'; setTimeout(() => { warmupOverlay.classList.add('hidden'); isFirstLaunch = false; }, 500); }, 1000);
             } else { gameInCountdown = true; runCountdown(() => { isPlaying = true; invulnerableUntil = performance.now() + 1000; }); }
         }
 
@@ -1390,7 +1410,7 @@
                         showBonus("HOSSA! KAPITAŁ PŁYNIE!", "#00ffff"); 
                         audioManager.playPowerUp();
 
-                        // FIX: EFEKT CZĄSTECZEK (CYJAN) - DODANY
+                        // EFEKT CZĄSTECZEK (CYJAN) - WYBUCH
                         for(let k=0; k<25; k++) {
                             pushParticle(new Particle3D(obs.mesh.position.x, obs.mesh.position.y, obs.mesh.position.z, 0x00ffff));
                         }
@@ -1437,17 +1457,32 @@
             requestAnimationFrame(animate); if (!scene) return;
             const now = performance.now(); const dt = now - lastFrameTime; lastFrameTime = now;
             const fps = dt > 0 ? (1000 / dt) : 60; fpsWindow.push(fps); if (fpsWindow.length > 45) fpsWindow.shift();
-            
             if (isPlaying && !isPaused) {
                 if (gameSpeed < maxSpeed) gameSpeed += 0.0002; updateSpeedBar();
                 if(ground && ground.material.roughnessMap) ground.material.roughnessMap.offset.y -= gameSpeed * 0.01;
                 
-                // FIX: Naprawa Feedback Loop w WebGL
-                // Usunięto kod aktualizujący cubeCamera (już niepotrzebny, bo zmieniliśmy materiały)
+                // FIX: Usunięto cubeCamera.update() - brak WebGL Loop
 
                 if (magnetActive) {
                     if (Date.now() > magnetTimer) magnetActive = false;
-                    else obstacles.forEach(obs => { if (obs.type === 0 && obs.mesh.position.z > -60) { const dx = player.position.x - obs.mesh.position.x; if (Math.abs(dx) < 30) obs.mesh.position.x += dx * 0.15; } });
+                    else {
+                        // Przyciąganie monet
+                        obstacles.forEach(obs => { 
+                            if (obs.type === 0 && obs.mesh.position.z > -60) { 
+                                const dx = player.position.x - obs.mesh.position.x; 
+                                if (Math.abs(dx) < 30) obs.mesh.position.x += dx * 0.15; 
+                            } 
+                        });
+                        // FIX: Ciągła aura cząsteczek przy aktywnym diamencie
+                        if (Math.random() < 0.3) {
+                            pushParticle(new Particle3D(
+                                player.position.x + (Math.random()-0.5), 
+                                player.position.y + 1 + (Math.random()-0.5), 
+                                player.position.z, 
+                                0x00ffff
+                            ));
+                        }
+                    }
                 }
                 player.position.x += (player.targetX - player.position.x) * 0.35;
                 const tilt = (player.position.x - player.targetX) * 0.08; player.rotation.z = -tilt; player.rotation.y = -tilt * 0.3; 
