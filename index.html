@@ -212,6 +212,13 @@
             padding-right: var(--sar);
             box-sizing: border-box;
         }
+        
+        /* Ukryj pasek notowań na mobile (telefon / tablet) */
+@media (hover: none) and (pointer: coarse) {
+    .stock-ticker {
+        display: none !important;
+    }
+}
 
         .bonus-text {
             position: absolute;
@@ -1309,7 +1316,7 @@
         window.addEventListener('mousemove', (e) => { 
             if (!isPlaying) return; 
             if (document.pointerLockElement === document.body) {
-                mousePosNorm += e.movementX * 0.0035;
+                mousePosNorm += e.movementX * 0.007;
                 mousePosNorm = Math.max(0, Math.min(1, mousePosNorm));
                 handleInput(mousePosNorm);
             } else handleInput(e.clientX / window.innerWidth); 
@@ -1594,6 +1601,7 @@ if (humpL && humpT) {
     </script>
 </body>
 </html>
+
 
 
 
