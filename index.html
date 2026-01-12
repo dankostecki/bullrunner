@@ -1337,7 +1337,7 @@ window.addEventListener('resize', updateOrientationOverlay);
         window.addEventListener('mousemove', (e) => { 
             if (!isPlaying) return; 
             if (document.pointerLockElement === document.body) {
-                mousePosNorm += e.movementX * 0.007;
+                mousePosNorm += e.movementX * 0.008;
                 mousePosNorm = Math.max(0, Math.min(1, mousePosNorm));
                 handleInput(mousePosNorm);
             } else handleInput(e.clientX / window.innerWidth); 
@@ -1634,6 +1634,7 @@ if (humpL && humpT) {
     </script>
 </body>
 </html>
+
 
 
 
