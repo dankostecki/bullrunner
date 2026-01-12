@@ -1,6 +1,7 @@
 {
-  "name": "Bull Runner",
+  "name": "Bull Runner - Wall Street Game",
   "short_name": "BullRunner",
+  "description": "Bull Runner",
   "start_url": "index.html",
   "display": "standalone",
   "orientation": "landscape",
@@ -10,7 +11,8 @@
     {
       "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
