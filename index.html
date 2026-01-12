@@ -909,9 +909,16 @@
         let sceneryTimer = 0; 
         let runningCycle = 0;
         let mousePosNorm = 0.5;
+        let tiltNormSmoothed = 0.5; // 0..1
         let obstacles = [];
         let sceneryObjects = []; 
         let particles = [];
+        // --- TILT / BUJANIE BYKA ---
+let tiltNormSmoothed = 0.5; // wygładzony sygnał z telefonu (0..1)
+
+let playerXVel = 0;        // prędkość boczna byka
+let playerLean = 0;        // aktualny przechył (bank)
+let playerLeanVel = 0;     // "sprężyna" przechyłu
         let MAX_PARTICLES = 260;
         const MAX_BUILDINGS = 80;
         const MAX_OBSTACLES = 90;
@@ -1136,15 +1143,31 @@
         }
 
         function handleOrientation(event) {
-            if (!isPlaying || isPaused) return;
-            let tilt = event.gamma; 
-            if (window.orientation === 90) tilt = -event.beta;
-            if (window.orientation === -90) tilt = event.beta;
-            let sensitivity = 30; 
-            let normalized = (tilt / sensitivity) * 0.5 + 0.5;
-            normalized = Math.max(0, Math.min(1, normalized));
-            handleInput(normalized);
-        }
+             if (!isPlaying || isPaused) return;
+
+    // gamma: przechył lewo/prawo w orientacji "portrait".
+    // w landscape bywa inaczej, dlatego zostawiamy Twoje mapowanie.
+    let tilt = event.gamma;
+
+    if (window.orientation === 90) tilt = -event.beta;
+    if (window.orientation === -90) tilt = event.beta;
+
+    // ✅ USTAWIENIA STEROWANIA:
+    const invert = false;      // <- jeśli jest "w złą stronę", zmień na true
+    const sensitivity = 12;    // <- im MNIEJ, tym BARDZIEJ czułe (wcześniej miałeś 30)
+
+    if (invert) tilt *= -1;
+
+    // martwa strefa, żeby nie pływało od mikro-ruchów
+    const deadZone = 1.2; // stopnie
+    if (Math.abs(tilt) < deadZone) tilt = 0;
+
+    // normalizacja 0..1
+    let normalized = (tilt / sensitivity) * 0.5 + 0.5;
+    normalized = Math.max(0, Math.min(1, normalized));
+
+    handleInput(normalized);
+}
 
         function createPlayer() {
             player = new THREE.Group();
@@ -1265,10 +1288,16 @@
 
         function handleInput(normalizedX) {
             normalizedX = Math.max(0, Math.min(1, normalizedX));
-            mousePosNorm = normalizedX;
-            const target = (normalizedX * trackWidth) - (trackWidth / 2);
-            if (player) player.targetX = target;
-        }
+
+    // ✅ wygładzenie (im mniejsza liczba, tym bardziej płynnie)
+    const smooth = 0.18;
+    tiltNormSmoothed = tiltNormSmoothed + (normalizedX - tiltNormSmoothed) * smooth;
+
+    mousePosNorm = tiltNormSmoothed;
+    const target = (tiltNormSmoothed * trackWidth) - (trackWidth / 2);
+
+    if (player) player.targetX = target;
+}
 
         // ✅ FIX #1: Nie robimy preventDefault na starcie (bo to potrafi zabić "click" na buttonie na Androidzie)
         window.addEventListener('touchmove', (e) => {
@@ -1286,7 +1315,7 @@
         window.addEventListener('mousemove', (e) => { 
             if (!isPlaying) return; 
             if (document.pointerLockElement === document.body) {
-                mousePosNorm += e.movementX * 0.0020;
+                mousePosNorm += e.movementX * 0.0019;
                 mousePosNorm = Math.max(0, Math.min(1, mousePosNorm));
                 handleInput(mousePosNorm);
             } else handleInput(e.clientX / window.innerWidth); 
@@ -1503,9 +1532,38 @@
                         }
                     }
                 }
-                player.position.x += (player.targetX - player.position.x) * 0.35;
-                const tilt = (player.position.x - player.targetX) * 0.08; player.rotation.z = -tilt; player.rotation.y = -tilt * 0.3; 
-                if (window.playerLight) window.playerLight.position.x = player.position.x + THREE.MathUtils.clamp(-tilt * 10, -2.5, 2.5);
+                // --- ruch X (bardziej responsywny) ---
+const prevX = player.position.x;
+
+// było 0.35, dajemy szybciej
+const follow = 0.45;
+player.position.x += (player.targetX - player.position.x) * follow;
+
+// prędkość boczna
+playerXVel = player.position.x - prevX;
+
+// --- banking / bujanie (sprężyna) ---
+const maxLean = 0.45;      // maks przechył
+const velToLean = 6.5;     // jak mocno skręt wpływa na przechył
+const targetLean = THREE.MathUtils.clamp(-playerXVel * velToLean, -maxLean, maxLean);
+
+// sprężyna: płynne bujanie
+const stiffness = 0.18;
+const damping = 0.78;
+playerLeanVel = (playerLeanVel + (targetLean - playerLean) * stiffness) * damping;
+playerLean += playerLeanVel;
+
+// rotacje byka (ładny 3D tilt)
+player.rotation.z = playerLean;
+player.rotation.y = playerLean * 0.35;
+player.rotation.x = -Math.abs(playerLean) * 0.10;
+                if (window.playerLight) {
+    window.playerLight.position.x = player.position.x + THREE.MathUtils.clamp(-playerLean * 6, -3.0, 3.0);
+    window.playerLight.position.z = 3.2 + Math.abs(playerLean) * 0.6;
+}
+if (window.bullSpot) {
+    window.bullSpot.position.x = player.position.x + THREE.MathUtils.clamp(-playerLean * 8, -4.0, 4.0);
+}
                 if (player.head) player.head.rotation.x = Math.sin(Date.now() * 0.01) * 0.1;
                 if (player.legs) { runningCycle += gameSpeed * 0.2; player.legs[0].rotation.x = Math.sin(runningCycle); player.legs[1].rotation.x = Math.cos(runningCycle); player.legs[2].rotation.x = Math.cos(runningCycle); player.legs[3].rotation.x = Math.sin(runningCycle); player.position.y = Math.abs(Math.sin(runningCycle)) * 0.1; }
                 if (++spawnTimer > 45 / gameSpeed) { spawnTimer = 0; const r = Math.random(); let t = 1; if (r > 0.95 && !magnetActive) t = 3; else if (r > 0.55) t = 0; else if (r < 0.25) t = 2; pushObstacle(new Obstacle3D(t)); }
@@ -1537,4 +1595,5 @@
     </script>
 </body>
 </html>
+
 
