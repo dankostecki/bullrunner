@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BULL RUNNER - High Sensitivity</title>
+    
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     
@@ -289,7 +290,12 @@
             pointer-events: auto; overflow: hidden; 
         }
 
-        /* FIX: Usunięte style video */
+        /* Tło startowe bez wideo */
+        .video-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #050a10 0%, #0f2027 100%);
+            z-index: 1;
+        }
 
         #startScreen > h1, #startScreen > p, #startScreen > button { position: relative; z-index: 2; }
 
@@ -623,7 +629,7 @@
     </div>
 
     <div id="startScreen">
-        <div class="video-overlay" style="background: linear-gradient(135deg, #050a10 0%, #0f2027 100%);"></div>
+        <div class="video-overlay"></div>
         <h1>BULL<br>RUNNER</h1>
         <p>Hossa wraca na salony.<br>Zbuduj fortunę, omijając spadki i niedźwiedzie.</p>
         <button id="startBtn">INWESTUJ</button>
@@ -1010,8 +1016,6 @@
             try { document.getElementById('bgMusic')?.load(); } catch(e) {}
             try { document.getElementById('bgEnd')?.load(); } catch(e) {}
             
-            // FIX: Usunięto kod obsługi video.mp4
-
             document.addEventListener('click', () => {
                 audioManager.init();
                 if(!isPlaying && document.getElementById('bgIntro').paused && gameOverScreen.classList.contains('hidden')) {
@@ -1319,7 +1323,7 @@
                 // FIX: Szybsze ładowanie (co 50ms dodajemy 4% = ok 1.25 sekundy)
                 let progress = 0; 
                 const interval = setInterval(() => { 
-                    progress += 4; // było 1
+                    progress += 4; 
                     if(progress > 100) progress = 100; 
                     barFill.style.width = progress + '%'; 
                 }, 50);
@@ -1434,23 +1438,23 @@
             }
         }
 
-function animate() {
+        function animate() {
             requestAnimationFrame(animate); if (!scene) return;
-            // ... (reszta kodu dotycząca czasu i FPS bez zmian) ...
+            const now = performance.now(); const dt = now - lastFrameTime; lastFrameTime = now;
+            const fps = dt > 0 ? (1000 / dt) : 60; fpsWindow.push(fps); if (fpsWindow.length > 45) fpsWindow.shift();
             
             if (isPlaying && !isPaused) {
-                // ... (reszta kodu poruszania gracza i generowania przeszkód bez zmian) ...
+                if (gameSpeed < maxSpeed) gameSpeed += 0.0002; updateSpeedBar();
+                if(ground && ground.material.roughnessMap) ground.material.roughnessMap.offset.y -= gameSpeed * 0.01;
                 
-                // --- TUTAJ JEST POPRAWKA BŁĘDU FEEDBACK LOOP ---
+                // FIX: Naprawa Feedback Loop w WebGL
+                // Ukrywamy obiekty, które używają mapy środowiskowej, przed aktualizacją kamery
                 if (cubeUpdateCounter++ % cubeUpdateEvery === 0) {
-                    // 1. Ukrywamy obiekty, które powodują pętlę (te co mają envMap)
                     if(ground) ground.visible = false;
                     sceneryObjects.forEach(s => s.mesh.visible = false);
                     
-                    // 2. Aktualizujemy kamerę (teraz jest bezpiecznie)
                     cubeCamera.update(renderer, scene);
                     
-                    // 3. Pokazujemy obiekty z powrotem
                     if(ground) ground.visible = true;
                     sceneryObjects.forEach(s => s.mesh.visible = true);
                 }
@@ -1493,4 +1497,3 @@ function animate() {
     </script>
 </body>
 </html>
-
