@@ -987,6 +987,10 @@
         const liveRankIcon = document.getElementById('liveRankIcon');
         const liveRankName = document.getElementById('liveRankName');
         const liveRankFill = document.getElementById('liveRankFill');
+
+        // ✅ FIX #2: nie polegamy na "magicznych" globalach z id (na Androidzie to bywa wyłączone)
+        const pauseOverlay = document.getElementById('pauseOverlay');
+
         let bonusTimeout = null;
 
         highScoreEl.innerText = '$' + highScore;
@@ -1265,8 +1269,19 @@
             if (player) player.targetX = target;
         }
 
-        window.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isPlaying) return; handleInput(e.touches[0].clientX / window.innerWidth); }, { passive: false });
-        window.addEventListener('touchstart', (e) => { e.preventDefault(); if (!isPlaying) return; handleInput(e.touches[0].clientX / window.innerWidth); }, { passive: false });
+        // ✅ FIX #1: Nie robimy preventDefault na starcie (bo to potrafi zabić "click" na buttonie na Androidzie)
+        window.addEventListener('touchmove', (e) => {
+            if (!isPlaying) return;
+            e.preventDefault();
+            handleInput(e.touches[0].clientX / window.innerWidth);
+        }, { passive: false });
+
+        window.addEventListener('touchstart', (e) => {
+            if (!isPlaying) return;
+            e.preventDefault();
+            handleInput(e.touches[0].clientX / window.innerWidth);
+        }, { passive: false });
+
         window.addEventListener('mousemove', (e) => { 
             if (!isPlaying) return; 
             if (document.pointerLockElement === document.body) {
@@ -1275,6 +1290,7 @@
                 handleInput(mousePosNorm);
             } else handleInput(e.clientX / window.innerWidth); 
         });
+
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') { if (isPlaying) pauseGame(); else if (isPaused) resumeGame(); return; }
             if (!isPlaying) return;
