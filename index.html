@@ -909,15 +909,10 @@
         let sceneryTimer = 0; 
         let runningCycle = 0;
         let mousePosNorm = 0.5;
+        let tiltNormSmoothed = 0.5; // 0..1
         let obstacles = [];
         let sceneryObjects = []; 
         let particles = [];
-        // --- TILT / BUJANIE BYKA ---
-let tiltNormSmoothed = 0.5; // wygładzony sygnał z telefonu (0..1)
-
-let playerXVel = 0;        // prędkość boczna byka
-let playerLean = 0;        // aktualny przechył (bank)
-let playerLeanVel = 0;     // "sprężyna" przechyłu
         let MAX_PARTICLES = 260;
         const MAX_BUILDINGS = 80;
         const MAX_OBSTACLES = 90;
@@ -1531,37 +1526,42 @@ let playerLeanVel = 0;     // "sprężyna" przechyłu
                         }
                     }
                 }
-                // --- ruch X (bardziej responsywny) ---
-const prevX = player.position.x;
+// --- ruch X + tilt JAK W BULL_RUNNER.html ---
+player.position.x += (player.targetX - player.position.x) * 0.2;
 
-// było 0.35, dajemy szybciej
-const follow = 0.45;
-player.position.x += (player.targetX - player.position.x) * follow;
+// tilt bazuje na różnicy między pozycją a targetem (to daje ten “miękki” look)
+const tilt = (player.position.x - player.targetX) * 0.08;
 
-// prędkość boczna
-playerXVel = player.position.x - prevX;
+player.rotation.z = -tilt;
+player.rotation.y = -tilt * 0.3;
 
-// --- banking / bujanie (sprężyna) ---
-const maxLean = 0.45;      // maks przechył
-const velToLean = 6.5;     // jak mocno skręt wpływa na przechył
-const targetLean = THREE.MathUtils.clamp(-playerXVel * velToLean, -maxLean, maxLean);
-
-// sprężyna: płynne bujanie
-const stiffness = 0.18;
-const damping = 0.78;
-playerLeanVel = (playerLeanVel + (targetLean - playerLean) * stiffness) * damping;
-playerLean += playerLeanVel;
-
-// rotacje byka (ładny 3D tilt)
-player.rotation.z = playerLean;
-player.rotation.y = playerLean * 0.35;
-player.rotation.x = -Math.abs(playerLean) * 0.10;
-                if (window.playerLight) {
-    window.playerLight.position.x = player.position.x + THREE.MathUtils.clamp(-playerLean * 6, -3.0, 3.0);
-    window.playerLight.position.z = 3.2 + Math.abs(playerLean) * 0.6;
+// --- światło “podąża” za przechyłem (cień/shine jak w referencji) ---
+const backL = window.playerLight;
+if (backL) {
+    const side = THREE.MathUtils.clamp(-tilt * 10, -2.5, 2.5);
+    backL.position.set(player.position.x + side, 3.8, player.position.z + 3.2);
 }
-if (window.bullSpot) {
-    window.bullSpot.position.x = player.position.x + THREE.MathUtils.clamp(-playerLean * 8, -4.0, 4.0);
+
+const spotL = window.bullSpot;
+if (spotL) {
+    const side2 = THREE.MathUtils.clamp(-tilt * 14, -3.0, 3.0);
+    spotL.position.set(player.position.x + side2, 8.5, player.position.z + 6.0);
+    spotL.intensity = 0.85 + Math.min(0.35, Math.abs(tilt) * 2.0);
+}
+
+const humpL = window.humpSpot;
+const humpT = window.humpTarget;
+if (humpL && humpT) {
+    const side3 = THREE.MathUtils.clamp(-tilt * 16, -3.5, 3.5);
+
+    if (player.hump) {
+        player.hump.getWorldPosition(humpT.position);
+    } else {
+        humpT.position.set(player.position.x, 2.0, player.position.z - 0.3);
+    }
+
+    humpL.position.set(player.position.x + side3, 5.6, player.position.z + 4.0);
+    humpL.intensity = 0.85 + Math.min(0.45, Math.abs(tilt) * 2.2);
 }
                 if (player.head) player.head.rotation.x = Math.sin(Date.now() * 0.01) * 0.1;
                 if (player.legs) { runningCycle += gameSpeed * 0.2; player.legs[0].rotation.x = Math.sin(runningCycle); player.legs[1].rotation.x = Math.cos(runningCycle); player.legs[2].rotation.x = Math.cos(runningCycle); player.legs[3].rotation.x = Math.sin(runningCycle); player.position.y = Math.abs(Math.sin(runningCycle)) * 0.1; }
@@ -1594,6 +1594,7 @@ if (window.bullSpot) {
     </script>
 </body>
 </html>
+
 
 
 
