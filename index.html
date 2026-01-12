@@ -3,7 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BULL RUNNER - Mobile Production</title>
+    <!-- ⬇⬇⬇ DODAJ TO TUTAJ ⬇⬇⬇ -->
+<meta name="theme-color" content="#0f2027">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS (nie szkodzi Androidowi) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- ⬆⬆⬆ DO TEGO MIEJSCA ⬆⬆⬆ -->
+    
+    <title>BULL RUNNER</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
@@ -76,9 +85,10 @@
             100% { transform: rotate(0deg); }
         }
 
-        @media screen and (orientation: portrait) {
-            #orientation-overlay { display: flex; }
-        }
+        /* JS steruje overlayem – nie CSS */
+@media screen and (orientation: portrait) {
+    #orientation-overlay { display: none; }
+}
 
         /* --- UI --- */
         
@@ -998,6 +1008,13 @@
 
         // ✅ FIX #2: nie polegamy na "magicznych" globalach z id (na Androidzie to bywa wyłączone)
         const pauseOverlay = document.getElementById('pauseOverlay');
+        const orientationOverlay = document.getElementById('orientation-overlay');
+
+function updateOrientationOverlay() {
+    if (!orientationOverlay) return;
+    const isPortrait = window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
+    orientationOverlay.style.display = isPortrait ? "flex" : "none";
+}
 
         let bonusTimeout = null;
 
@@ -1140,6 +1157,10 @@
             if (window.DeviceOrientationEvent) {
                 window.addEventListener('deviceorientation', handleOrientation);
             }
+
+            updateOrientationOverlay();
+window.addEventListener('orientationchange', updateOrientationOverlay);
+window.addEventListener('resize', updateOrientationOverlay);
             window.dispatchEvent(new Event('resize'));
         }
 
@@ -1376,7 +1397,19 @@
             bonusTimeout = setTimeout(() => { bonusMsgEl.classList.remove('bonus-active'); bonusTimeout = null; }, 2000);
         }
 
+        function requestFullScreen() {
+    const el = document.documentElement;
+    if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+    } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+    }
+}
+
         function startGame() {
+
+             requestFullScreen(); // ⬅⬅⬅ DOKŁADNIE TU
+            
             if (window.matchMedia && window.matchMedia('(pointer:fine)').matches) document.body.requestPointerLock();
             
             // FIX: Odblokowanie audio przy starcie
@@ -1601,6 +1634,7 @@ if (humpL && humpT) {
     </script>
 </body>
 </html>
+
 
 
 
