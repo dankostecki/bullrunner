@@ -1132,6 +1132,7 @@
             if (window.DeviceOrientationEvent) {
                 window.addEventListener('deviceorientation', handleOrientation);
             }
+            window.dispatchEvent(new Event('resize'));
         }
 
         function handleOrientation(event) {
@@ -1300,10 +1301,12 @@
         });
 
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        });
+    if (!camera || !renderer) return;  // ✅ FIX: mobile potrafi odpalić resize zanim init skończy
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+});
 
         function updateScoreDisplay() {
             score = coinScore + timeScore;
@@ -1534,3 +1537,4 @@
     </script>
 </body>
 </html>
+
