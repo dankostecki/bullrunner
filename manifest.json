@@ -1,0 +1,16 @@
+{
+  "name": "Bull Runner",
+  "short_name": "BullRunner",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0f2027",
+  "theme_color": "#39FF14",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
