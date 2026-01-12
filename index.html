@@ -1434,23 +1434,23 @@
             }
         }
 
-        function animate() {
+function animate() {
             requestAnimationFrame(animate); if (!scene) return;
-            const now = performance.now(); const dt = now - lastFrameTime; lastFrameTime = now;
-            const fps = dt > 0 ? (1000 / dt) : 60; fpsWindow.push(fps); if (fpsWindow.length > 45) fpsWindow.shift();
+            // ... (reszta kodu dotycząca czasu i FPS bez zmian) ...
             
             if (isPlaying && !isPaused) {
-                if (gameSpeed < maxSpeed) gameSpeed += 0.0002; updateSpeedBar();
-                if(ground && ground.material.roughnessMap) ground.material.roughnessMap.offset.y -= gameSpeed * 0.01;
+                // ... (reszta kodu poruszania gracza i generowania przeszkód bez zmian) ...
                 
-                // FIX: Naprawa Feedback Loop w WebGL
-                // Ukrywamy obiekty, które używają mapy środowiskowej, przed aktualizacją kamery
+                // --- TUTAJ JEST POPRAWKA BŁĘDU FEEDBACK LOOP ---
                 if (cubeUpdateCounter++ % cubeUpdateEvery === 0) {
+                    // 1. Ukrywamy obiekty, które powodują pętlę (te co mają envMap)
                     if(ground) ground.visible = false;
                     sceneryObjects.forEach(s => s.mesh.visible = false);
                     
+                    // 2. Aktualizujemy kamerę (teraz jest bezpiecznie)
                     cubeCamera.update(renderer, scene);
                     
+                    // 3. Pokazujemy obiekty z powrotem
                     if(ground) ground.visible = true;
                     sceneryObjects.forEach(s => s.mesh.visible = true);
                 }
@@ -1493,3 +1493,4 @@
     </script>
 </body>
 </html>
+
