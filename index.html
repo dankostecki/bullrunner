@@ -941,9 +941,9 @@
         let currentRankIndex = 0;
         let magnetActive = false;
         let magnetTimer = 0;
-        let gameSpeed = 0.5;
-        let baseSpeed = 0.5;
-        const maxSpeed = 2.4; 
+        let gameSpeed = isMobile ? 0.38 : 0.5;
+let baseSpeed = isMobile ? 0.38 : 0.5;
+const maxSpeed = isMobile ? 2.2 : 2.4;
         let spawnTimer = 0;
         let sceneryTimer = 0; 
         let runningCycle = 0;
@@ -1005,6 +1005,7 @@
         }
 
         const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
         let qualityLevel = reducedMotion ? 1 : 2; 
         let qualityCooldownUntil = 0;
         let fpsWindow = [];
@@ -1577,7 +1578,7 @@ document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
             const now = performance.now(); const dt = now - lastFrameTime; lastFrameTime = now;
             const fps = dt > 0 ? (1000 / dt) : 60; fpsWindow.push(fps); if (fpsWindow.length > 45) fpsWindow.shift();
             if (isPlaying && !isPaused) {
-                if (gameSpeed < maxSpeed) gameSpeed += 0.0002; updateSpeedBar();
+                if (gameSpeed < maxSpeed) gameSpeed += (isMobile ? 0.00012 : 0.0002); updateSpeedBar();
                 if(ground && ground.material.roughnessMap) ground.material.roughnessMap.offset.y -= gameSpeed * 0.01;
                 
                 // FIX: Usunięto cubeCamera.update() - brak WebGL Loop
@@ -1671,6 +1672,7 @@ if (humpL && humpT) {
     </script>
 </body>
 </html>
+
 
 
 
