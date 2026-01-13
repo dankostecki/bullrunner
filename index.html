@@ -547,17 +547,39 @@
             100% { opacity: 1; }
         }
 
-        @media (max-height: 500px) {
-            #startScreen h1 { font-size: 48px; line-height: 1.2; }
-            #startScreen p { display: none; } 
-            .ingame-logo { width: 80px; opacity: 0.6; }
-            #gameOverScreen { padding: 20px; max-width: 80%; }
-            #gameOverScreen h1 { font-size: 24px; margin-bottom: 5px; }
-            button { padding: 12px 30px; font-size: 14px; margin-top: 5px; }
-            #finalScore { font-size: 20px; margin: 5px 0; }
-            #finalRank { font-size: 10px; margin-bottom: 10px; }
-            .main-score { font-size: 14px; margin-bottom: 5px; } 
-            .sub-score { font-size: 8px; } 
+@media (max-height: 500px) {
+
+    #startScreen h1 {
+        font-size: 48px;
+        line-height: 1.2;
+        margin-top: -20px;
+    }
+
+    #startScreen p {
+        display: block;
+        font-size: 13px;
+        margin-top: 10px;
+        margin-bottom: 25px;
+        opacity: 0.9;
+    }
+
+    .ingame-logo { width: 80px; opacity: 0.6; }
+
+    #gameOverScreen { padding: 20px; max-width: 80%; }
+    #gameOverScreen h1 { font-size: 24px; margin-bottom: 5px; }
+
+    button {
+        padding: 12px 30px;
+        font-size: 14px;
+        margin-top: 15px;
+    }
+
+    #finalScore { font-size: 20px; margin: 5px 0; }
+    #finalRank { font-size: 10px; margin-bottom: 10px; }
+    .main-score { font-size: 14px; margin-bottom: 5px; }
+    .sub-score { font-size: 8px; }
+
+}
             .score-board { top: max(10px, var(--sat)); left: max(10px, var(--sal)); }
             .high-score { font-size: 12px; top: max(10px, var(--sat)); }
             .stock-ticker { top: max(110px, var(--sat)); font-size: 9px; } 
@@ -1634,6 +1656,7 @@ if (humpL && humpT) {
     </script>
 </body>
 </html>
+
 
 
 
