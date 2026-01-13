@@ -928,6 +928,8 @@
         let player; 
         let ground;
         let coinTexture;
+        const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
         let isPlaying = false;
         let isPaused = false;
         let wasPlayingBeforePause = false;
@@ -941,9 +943,6 @@
         let currentRankIndex = 0;
         let magnetActive = false;
         let magnetTimer = 0;
-        let gameSpeed = isMobile ? 0.38 : 0.5;
-let baseSpeed = isMobile ? 0.38 : 0.5;
-const maxSpeed = isMobile ? 2.2 : 2.4;
         let spawnTimer = 0;
         let sceneryTimer = 0; 
         let runningCycle = 0;
@@ -1004,8 +1003,6 @@ const maxSpeed = isMobile ? 2.2 : 2.4;
             tick();
         }
 
-        const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
         let qualityLevel = reducedMotion ? 1 : 2; 
         let qualityCooldownUntil = 0;
         let fpsWindow = [];
@@ -1013,7 +1010,9 @@ const maxSpeed = isMobile ? 2.2 : 2.4;
         let invulnerableUntil = 0;
         let gameInCountdown = false;
         const trackWidth = 14; 
-        
+        let gameSpeed = isMobile ? 0.38 : 0.5;
+        let baseSpeed = isMobile ? 0.38 : 0.5;
+        const maxSpeed = isMobile ? 2.2 : 2.4;
         const scoreEl = document.getElementById('scoreVal');
         const coinScoreEl = document.getElementById('coinScoreVal');
         const timeScoreEl = document.getElementById('timeScoreVal');
@@ -1672,6 +1671,7 @@ if (humpL && humpT) {
     </script>
 </body>
 </html>
+
 
 
 
