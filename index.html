@@ -948,6 +948,7 @@
         let sceneryTimer = 0; 
         let runningCycle = 0;
         let mousePosNorm = 0.5;
+        let lastMouseX = null;
         let tiltNormSmoothed = 0.5; // 0..1
         let obstacles = [];
         let sceneryObjects = []; 
@@ -1356,14 +1357,28 @@ window.addEventListener('resize', updateOrientationOverlay);
             handleInput(e.touches[0].clientX / window.innerWidth);
         }, { passive: false });
 
-        window.addEventListener('mousemove', (e) => { 
-            if (!isPlaying) return; 
-            if (document.pointerLockElement === document.body) {
-                mousePosNorm += e.movementX * 0.008;
-                mousePosNorm = Math.max(0, Math.min(1, mousePosNorm));
-                handleInput(mousePosNorm);
-            } else handleInput(e.clientX / window.innerWidth); 
-        });
+        window.addEventListener('mousemove', (e) => {
+    if (!isPlaying) return;
+
+    const sens = 0.008; // <- TU masz swoją czułość (zostawiłem Twoje 0.008)
+
+    if (document.pointerLockElement === document.body) {
+        mousePosNorm += e.movementX * sens;
+    } else {
+        // bez pointer lock: licz delta z clientX (żeby dalej było "intensywnie")
+        if (lastMouseX === null) lastMouseX = e.clientX;
+        const dx = e.clientX - lastMouseX;
+        lastMouseX = e.clientX;
+        mousePosNorm += dx * sens;
+    }
+
+    mousePosNorm = Math.max(0, Math.min(1, mousePosNorm));
+    handleInput(mousePosNorm);
+});
+
+        window.addEventListener('mouseleave', () => { lastMouseX = null; });
+window.addEventListener('mouseenter', () => { lastMouseX = null; });
+document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') { if (isPlaying) pauseGame(); else if (isPaused) resumeGame(); return; }
@@ -1656,6 +1671,7 @@ if (humpL && humpT) {
     </script>
 </body>
 </html>
+
 
 
 
