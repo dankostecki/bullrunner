@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- ⬇⬇⬇ DODAJ TO TUTAJ ⬇⬇⬇ -->
-<meta name="theme-color" content="#0f2027">
-<meta name="mobile-web-app-capable" content="yes">
+    <!-- PWA / kolor paska -->
+    <meta name="theme-color" content="#0f2027">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- opcjonalnie: <meta name="apple-mobile-web-app-title" content="BullRunner"> -->
 
-<!-- iOS (nie szkodzi Androidowi) -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!-- ⬆⬆⬆ DO TEGO MIEJSCA ⬆⬆⬆ -->
-    
     <title>BULL RUNNER</title>
-    
+
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -27,10 +26,12 @@
             --sal: env(safe-area-inset-left);
         }
 
-        body {
-            margin: 0;
-            padding: 0;
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0; padding: 0;
             overflow: hidden;
+            overscroll-behavior: none;
             background-color: #000;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: none;
@@ -38,12 +39,23 @@
             -webkit-user-select: none;
         }
 
+        /* Stabilne wysokości dla kontenerów/overlayów */
+        #game-container,
+        #startScreen,
+        #pauseOverlay,
+        #gameOverScreen,
+        #countdownOverlay,
+        #warmupOverlay,
+        #orientation-overlay {
+            min-height: 100vh;
+            min-height: 100svh;
+            min-height: 100dvh;
+        }
+
         #game-container {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: 1;
             background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
         }
@@ -56,10 +68,8 @@
         /* --- ORIENTATION LOCK OVERLAY --- */
         #orientation-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: #0f2027;
             z-index: 9999;
             display: none;
@@ -72,35 +82,28 @@
             padding: 20px;
             box-sizing: border-box;
         }
-
         #orientation-overlay .icon {
             font-size: 50px;
             margin-bottom: 20px;
             animation: rotateDevice 2s infinite ease-in-out;
         }
-
         @keyframes rotateDevice {
             0% { transform: rotate(0deg); }
             50% { transform: rotate(-90deg); }
             100% { transform: rotate(0deg); }
         }
-
-        /* JS steruje overlayem – nie CSS */
-@media screen and (orientation: portrait) {
-    #orientation-overlay { display: none; }
-}
+        /* (Usunięto regułę @media chowającą overlay w portrecie) */
 
         /* --- UI --- */
-        
         .ingame-logo {
             position: absolute;
-            top: max(20px, var(--sat)); 
+            top: max(20px, var(--sat));
             left: 50%;
             transform: translateX(-50%);
-            width: 120px; 
+            width: 120px;
             height: auto;
-            z-index: 9; 
-            opacity: 0.4; 
+            z-index: 9;
+            opacity: 0.4;
             pointer-events: none;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
@@ -124,7 +127,7 @@
         }
 
         .main-score {
-            color: #39FF14; 
+            color: #39FF14;
             font-size: 18px;
             font-weight: normal;
             text-shadow: 0 0 15px #39FF14;
@@ -141,7 +144,7 @@
         }
 
         .sub-score {
-            color: #86efac; 
+            color: #86efac;
             font-size: 10px;
             font-family: 'Press Start 2P', cursive;
             font-weight: normal;
@@ -162,19 +165,15 @@
             gap: 5px;
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        
+
         .rank-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding-bottom: 2px;
         }
-        
-        .rank-icon {
-            font-size: 16px;
-            filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
-        }
-        
+
+        .rank-icon { font-size: 16px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
         .rank-name-live {
             font-family: 'Press Start 2P', cursive;
             font-size: 9px;
@@ -184,23 +183,17 @@
             text-shadow: 0 0 5px currentColor;
             padding-top: 3px;
         }
-        
         .rank-progress-live-bg {
-            width: 100%;
-            height: 4px;
+            width: 100%; height: 4px;
             background: rgba(255,255,255,0.15);
-            border-radius: 2px;
-            overflow: hidden;
+            border-radius: 2px; overflow: hidden;
         }
-        
         .rank-progress-live-fill {
-            height: 100%;
-            width: 0%;
+            height: 100%; width: 0%;
             background: #fff;
             box-shadow: 0 0 8px currentColor;
             transition: width 0.3s ease-out;
         }
-
         .rank-up-anim {
             transform: scale(1.1);
             border-color: #ffd700;
@@ -222,37 +215,30 @@
             padding-right: var(--sar);
             box-sizing: border-box;
         }
-        
-        /* Ukryj pasek notowań na mobile (telefon / tablet) */
-@media (hover: none) and (pointer: coarse) {
-    .stock-ticker {
-        display: none !important;
-    }
-}
+        /* Ukryj pasek notowań na mobile */
+        @media (hover: none) and (pointer: coarse) {
+            .stock-ticker { display: none !important; }
+        }
 
         .bonus-text {
             position: absolute;
             top: 20%;
             left: 50%;
-            transform: translate(-50%, 0); 
+            transform: translate(-50%, 0);
             color: #ffd700;
             font-family: 'Press Start 2P', cursive;
             font-size: 24px;
             font-weight: normal;
             text-shadow: 0 0 25px rgba(255, 215, 0, 1.0);
             pointer-events: none;
-            opacity: 0; 
+            opacity: 0;
             z-index: 20;
             letter-spacing: 1px;
             text-align: center;
             white-space: nowrap;
             line-height: 1.5;
         }
-        
-        .bonus-active {
-            animation: floatUp 2s forwards;
-        }
-
+        .bonus-active { animation: floatUp 2s forwards; }
         @keyframes floatUp {
             0% { opacity: 0; transform: translate(-50%, 50px) scale(0.5); }
             10% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
@@ -271,7 +257,6 @@
             z-index: 10;
             pointer-events: none;
         }
-
         .speed-label {
             color: #fff;
             font-size: 12px;
@@ -281,7 +266,6 @@
             opacity: 0.8;
             font-weight: 600;
         }
-
         .speed-container {
             width: 100%;
             height: 6px;
@@ -289,7 +273,6 @@
             border-radius: 10px;
             overflow: hidden;
         }
-
         .speed-bar {
             width: 0%;
             height: 100%;
@@ -301,27 +284,22 @@
         #startScreen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: transparent; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 200; 
+            justify-content: center; align-items: center; z-index: 200;
             padding: 20px; box-sizing: border-box;
             transition: opacity 0.5s ease-out, visibility 0.5s;
-            pointer-events: auto; overflow: hidden; 
+            pointer-events: auto; overflow: hidden;
         }
-
-        /* FIX: Usunięto odwołania do wideo, zostawiamy tło CSS */
         .video-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, rgba(5, 10, 16, 0.85) 0%, rgba(15, 32, 39, 0.9) 100%);
             z-index: 1;
         }
-
         #startScreen > h1, #startScreen > p, #startScreen > button { position: relative; z-index: 2; }
-
         #startScreen h1 {
             font-size: 80px; line-height: 1.1; margin-bottom: 40px;
             text-shadow: 6px 6px 0px #006400, 10px 10px 20px rgba(0,0,0,0.8);
             text-align: center;
         }
-
         #startScreen p {
             max-width: 600px; margin-bottom: 50px; font-size: 18px; opacity: 0.8;
         }
@@ -330,21 +308,19 @@
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%); width: 90%; max-width: 500px;
             background: rgba(15, 23, 42, 0.95); padding: 40px;
-            border-radius: 12px; border: 1px solid rgba(57, 255, 20, 0.3); 
+            border-radius: 12px; border: 1px solid rgba(57, 255, 20, 0.3);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
             display: flex; flex-direction: column; align-items: center;
             text-align: center; z-index: 150; pointer-events: auto;
             backdrop-filter: blur(10px); transition: opacity 0.3s;
             margin: 0 auto;
         }
-
         h1 {
             color: #39FF14; font-family: 'Press Start 2P', cursive;
             line-height: 1.5; margin: 0 0 20px 0;
             text-transform: uppercase; text-align: center; width: 100%;
             transform: skew(-5deg);
         }
-
         #gameOverScreen h1 { font-size: 32px; text-shadow: 4px 4px 0px #006400; }
 
         #rankBadge {
@@ -353,41 +329,22 @@
             filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
             animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-
         @keyframes popIn {
             0% { transform: scale(0); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
-
-        .next-rank-container {
-            width: 100%;
-            margin-bottom: 25px;
-        }
-
+        .next-rank-container { width: 100%; margin-bottom: 25px; }
         .next-rank-label {
-            font-size: 10px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
+            font-size: 10px; color: #94a3b8; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 5px; display: flex; justify-content: space-between;
         }
-
         .rank-progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
+            width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px; overflow: hidden; position: relative;
         }
-
         .rank-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #39FF14, #00ffff);
-            width: 0%;
-            transition: width 1s ease-out;
+            height: 100%; background: linear-gradient(90deg, #39FF14, #00ffff);
+            width: 0%; transition: width 1s ease-out;
             box-shadow: 0 0 10px currentColor;
         }
 
@@ -402,76 +359,64 @@
             transition: transform 0.2s, box-shadow 0.2s;
             touch-action: manipulation;
         }
-
         button:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(57, 255, 20, 0.6); }
         button:active { transform: scale(0.98); }
 
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 
-        #pauseOverlay{
+        #pauseOverlay {
             position: fixed; inset: 0; z-index: 180;
             display:flex; align-items:center; justify-content:center;
             background: rgba(0,0,0,0.35);
             backdrop-filter: blur(6px);
             transition: opacity 0.2s ease, visibility 0.2s;
-            padding: 20px;
-            box-sizing: border-box;
+            padding: 20px; box-sizing: border-box;
         }
-        .pause-card{
+        .pause-card {
             background: rgba(15, 23, 42, 0.92);
             border: 1px solid rgba(57, 255, 20, 0.25);
             border-radius: 14px;
             padding: 22px 26px;
             text-align:center;
             box-shadow: 0 18px 45px rgba(0,0,0,0.65);
-            max-width: 420px;
-            width: 100%;
+            max-width: 420px; width: 100%;
         }
-        .pause-title{
+        .pause-title {
             font-family: 'Press Start 2P', cursive;
-            color:#39FF14;
-            font-size: 22px;
+            color:#39FF14; font-size: 22px;
             text-shadow: 3px 3px 0px #006400;
-            margin-bottom: 10px;
-            transform: skew(-4deg);
+            margin-bottom: 10px; transform: skew(-4deg);
         }
-        .pause-sub{
-            color:#cbd5e1;
-            font-size: 14px;
-            line-height: 1.5;
-            opacity: 0.9;
-        }
+        .pause-sub { color:#cbd5e1; font-size: 14px; line-height: 1.5; opacity: 0.9; }
 
         #finalScore {
-            font-size: 36px; color: #39FF14; margin: 15px 0 5px 0; 
+            font-size: 36px; color: #39FF14; margin: 15px 0 5px 0;
             font-family: 'Press Start 2P', cursive; text-shadow: 4px 4px 0 #006400;
             line-height: 1.4; text-align: center; width: 100%;
         }
-
         #finalRank {
             font-family: 'Press Start 2P', cursive; font-size: 14px;
             line-height: 1.5; margin-bottom: 25px;
             text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
         }
-        
+
         #loader {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%); color: #39FF14;
             font-size: 16px; z-index: 0; font-family: monospace;
             letter-spacing: 2px; text-transform: uppercase;
         }
-        
-        #countdownOverlay{
+
+        #countdownOverlay {
             position: fixed; inset: 0; z-index: 190;
             display:flex; align-items:center; justify-content:center;
             background: rgba(0,0,0,0.25);
             backdrop-filter: blur(6px);
             transition: opacity 0.2s ease, visibility 0.2s;
-            padding: 20px;
-            box-sizing: border-box;
+            padding: 20px; box-sizing: border-box;
             pointer-events: none;
         }
-        .countdown-card{
+        .countdown-card {
             background: rgba(15, 23, 42, 0.65);
             border: 1px solid rgba(57, 255, 20, 0.22);
             border-radius: 18px;
@@ -480,7 +425,7 @@
             box-shadow: 0 18px 45px rgba(0,0,0,0.55);
             min-width: 220px;
         }
-        .countdown-text{
+        .countdown-text {
             font-family: 'Press Start 2P', cursive;
             color:#39FF14;
             font-size: 52px;
@@ -489,27 +434,17 @@
             transform: skew(-4deg);
             margin-bottom: 6px;
         }
-        .countdown-sub{
-            color:#cbd5e1;
-            font-size: 12px;
-            opacity: 0.9;
-            letter-spacing: 1px;
-        }
+        .countdown-sub { color:#cbd5e1; font-size: 12px; opacity: 0.9; letter-spacing: 1px; }
 
         #warmupOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85); 
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(8px);
-            z-index: 300; 
+            z-index: 300;
             display: flex; align-items: center; justify-content: center;
             transition: opacity 0.5s ease;
         }
-
-        .warmup-content {
-            text-align: center;
-            width: 300px;
-        }
-
+        .warmup-content { text-align: center; width: 300px; }
         .warmup-text {
             color: #39FF14;
             font-family: 'Press Start 2P', cursive;
@@ -518,7 +453,6 @@
             text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
             animation: blinkText 1s infinite alternate;
         }
-
         .warmup-sub {
             color: #94a3b8;
             font-family: monospace;
@@ -527,87 +461,58 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-
         .warmup-bar-bg {
             width: 100%; height: 6px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
+            border-radius: 4px; overflow: hidden;
         }
-
         .warmup-bar-fill {
             height: 100%; width: 0%;
             background: #39FF14;
             box-shadow: 0 0 10px #39FF14;
             transition: width 0.1s linear;
         }
+        @keyframes blinkText { 0% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        @keyframes blinkText {
-            0% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-
-@media (max-height: 500px) {
-
-    #startScreen h1 {
-        font-size: 48px;
-        line-height: 1.2;
-        margin-top: -20px;
-    }
-
-    #startScreen p {
-        display: block;
-        font-size: 14px;
-        margin-top: 10px;
-        margin-bottom: 25px;
-        opacity: 0.9;
-    }
-
-    .ingame-logo { width: 80px; opacity: 0.6; }
-
-    #gameOverScreen { padding: 20px; max-width: 80%; }
-    #gameOverScreen h1 { font-size: 24px; margin-bottom: 5px; }
-
-    button {
-        padding: 12px 30px;
-        font-size: 14px;
-        margin-top: 15px;
-    }
-
-    #finalScore { font-size: 20px; margin: 5px 0; }
-    #finalRank { font-size: 10px; margin-bottom: 10px; }
-    .main-score { font-size: 14px; margin-bottom: 5px; }
-    .sub-score { font-size: 8px; }
-
-}
+        /* Responsive tweaks */
+        @media (max-height: 500px) {
+            #startScreen h1 { font-size: 48px; line-height: 1.2; margin-top: -20px; }
+            #startScreen p { display: block; font-size: 14px; margin-top: 10px; margin-bottom: 25px; opacity: 0.9; }
+            .ingame-logo { width: 80px; opacity: 0.6; }
+            #gameOverScreen { padding: 20px; max-width: 80%; }
+            #gameOverScreen h1 { font-size: 24px; margin-bottom: 5px; }
+            button { padding: 12px 30px; font-size: 14px; margin-top: 15px; }
+            #finalScore { font-size: 20px; margin: 5px 0; }
+            #finalRank { font-size: 10px; margin-bottom: 10px; }
+            .main-score { font-size: 14px; margin-bottom: 5px; }
+            .sub-score { font-size: 8px; }
             .score-board { top: max(10px, var(--sat)); left: max(10px, var(--sal)); }
             .high-score { font-size: 12px; top: max(10px, var(--sat)); }
-            .stock-ticker { top: max(110px, var(--sat)); font-size: 9px; } 
+            .stock-ticker { top: max(110px, var(--sat)); font-size: 9px; }
             .speed-wrapper { width: 40%; bottom: max(10px, var(--sab)); }
-            .bonus-text { font-size: 16px; top: 20%; } 
+            .bonus-text { font-size: 16px; top: 20%; }
             #rankBadge { font-size: 40px; }
             .rank-tracker { width: 160px; margin-top: 5px; padding: 5px; }
             .rank-icon { font-size: 16px; }
-            .rank-name-live { font-size: 7px; } 
+            .rank-name-live { font-size: 7px; }
         }
 
         @media (min-width: 768px) and (min-height: 600px) {
             .main-score { font-size: 24px; }
             .sub-score { font-size: 12px; }
             .bonus-text { font-size: 32px; }
-            #startScreen h1 { font-size: 100px; line-height: 1.1; } 
+            #startScreen h1 { font-size: 100px; line-height: 1.1; }
             #startScreen p { font-size: 24px; }
             .ingame-logo { width: 160px; }
             #gameOverScreen { max-width: 600px; padding: 60px; }
             #finalRank { font-size: 18px; margin-bottom: 30px; }
             button { font-size: 22px; padding: 20px 70px; }
             .speed-wrapper { width: 400px; bottom: max(40px, var(--sab)); }
-            
             .rank-tracker { width: 280px; padding: 12px; }
             .rank-icon { font-size: 24px; }
             .rank-name-live { font-size: 11px; }
         }
-</style>
+    </style>
 </head>
 <body>
 
@@ -654,7 +559,7 @@
                 <div id="liveRankFill" class="rank-progress-live-fill"></div>
             </div>
         </div>
-        </div>
+    </div>
     
     <div id="bonusMsg" class="bonus-text">DYWIDENDA +$5000</div>
     
@@ -712,6 +617,7 @@
     </div>
 
     <script>
+        /* --- KONFIG RANKINGU --- */
         const RANKS = [
             { limit: 0,      name: "NOWICJUSZ",          color: "#bdc3c7", icon: "👶" }, 
             { limit: 15000,  name: "ROKUJĄCY INWESTOR",  color: "#86efac", icon: "📈" }, 
@@ -754,19 +660,15 @@
                 if(this.gameTrack) this.gameTrack.volume = 0;
                 if(this.endTrack) this.endTrack.volume = 0;
             }
-
             init() {
                 if (!this.ctx) {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this.ctx = new AudioContext();
                 }
-                // Próba odblokowania, jeśli kontekst istnieje
                 if (this.ctx && this.ctx.state === 'suspended') {
                     this.ctx.resume().catch(e => console.log(e));
                 }
             }
-
-            // FIX: Funkcja do odblokowania audio na mobile
             unlockAudio() {
                 if (this.ctx && this.ctx.state === 'suspended') {
                     this.ctx.resume().then(() => {
@@ -774,7 +676,6 @@
                     });
                 }
             }
-
             fade(audioEl, startVol, endVol, duration, onComplete) {
                 if(!audioEl) return;
                 if(audioEl.fadeInterval) clearInterval(audioEl.fadeInterval);
@@ -783,10 +684,7 @@
                 const volStep = (endVol - startVol) / steps;
                 let currentStep = 0;
                 audioEl.volume = startVol;
-                
-                // Upewniamy się, że audio jest odblokowane przed odtwarzaniem
                 this.unlockAudio(); 
-
                 if(endVol > 0 && audioEl.paused) {
                     audioEl.play().catch(e => console.log("Autoplay blocked:", e));
                 }
@@ -805,34 +703,27 @@
                     }
                 }, stepTime);
             }
-
             playIntro() {
                 this.fade(this.gameTrack, this.gameTrack.volume, 0, 1000);
                 this.fade(this.endTrack, this.endTrack.volume, 0, 1000);
                 this.fade(this.introTrack, 0, this.targetBgmVol, 1500); 
             }
-
             transitionToGame() {
                 this.fade(this.introTrack, this.introTrack.volume, 0, 1000);
                 this.fade(this.endTrack, this.endTrack.volume, 0, 1000);
                 this.fade(this.gameTrack, 0, this.targetBgmVol, 1500);
             }
-
             transitionToGameOver() {
                 this.fade(this.gameTrack, this.gameTrack.volume, 0, 500);
                 this.fade(this.endTrack, 0, this.targetBgmVol, 2000); 
             }
-            
             transitionToMenu() {
                 this.fade(this.endTrack, this.endTrack.volume, 0, 1000);
                 this.fade(this.introTrack, 0, this.targetBgmVol, 1500);
             }
-
             playTone(freq, type, duration, vol = 0.1) {
                 if (!this.ctx || this.sfxVolume <= 0) return;
-                // Bezpiecznik audio
                 this.unlockAudio();
-
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 const finalVol = vol * this.sfxVolume;
@@ -845,18 +736,15 @@
                 osc.start();
                 osc.stop(this.ctx.currentTime + duration);
             }
-
             playCoin() {
                 this.playTone(1200, 'sine', 0.1, 0.1);
                 setTimeout(() => this.playTone(1800, 'sine', 0.2, 0.05), 50);
             }
-
             playBonus() {
                 this.playTone(880, 'square', 0.1, 0.1);
                 setTimeout(() => this.playTone(1108, 'square', 0.1, 0.1), 100);
                 setTimeout(() => this.playTone(1318, 'square', 0.3, 0.1), 200);
             }
-
             playPowerUp() {
                 if (!this.ctx || this.sfxVolume <= 0) return;
                 this.unlockAudio();
@@ -873,15 +761,12 @@
                 osc.start();
                 osc.stop(this.ctx.currentTime + 0.5);
             }
-
             playCrash() {
                 this.playTone(100, 'sawtooth', 0.3, 0.2);
                 this.playTone(60, 'square', 0.4, 0.2);
             }
         }
-
         const audioManager = new AudioManager();
-
         function safePlay(mediaEl) {
             try {
                 const p = mediaEl.play();
@@ -890,7 +775,6 @@
         }
 
         let scene, camera, renderer;
-        // FIX: USUNIĘTO CUBECAMERA - TO ONA POWODOWAŁA BŁĘDY WEBGL NA TELEFONIE
         let buildingMaterial;
         let cubeUpdateCounter = 0;
         let cubeUpdateEvery = 45;
@@ -914,7 +798,6 @@
                 warmGroup.add(particle);
                 scene.add(warmGroup);
                 renderer.compile(scene, camera);
-                // FIX: Usunięto cubeCamera.update()
                 renderer.render(scene, camera);
                 scene.remove(warmGroup);
                 warmGroup.traverse(o => {
@@ -959,7 +842,6 @@
         function applyQuality(level) {
             qualityLevel = Math.max(0, Math.min(2, level));
             const dpr = window.devicePixelRatio || 1;
-            // FIX: Ograniczenie DPI dla telefonów
             if (qualityLevel === 2) {
                 MAX_PARTICLES = reducedMotion ? 180 : 260;
                 renderer.setPixelRatio(Math.min(dpr, 1.5));
@@ -1028,20 +910,23 @@
         const liveRankIcon = document.getElementById('liveRankIcon');
         const liveRankName = document.getElementById('liveRankName');
         const liveRankFill = document.getElementById('liveRankFill');
-
-        // ✅ FIX #2: nie polegamy na "magicznych" globalach z id (na Androidzie to bywa wyłączone)
         const pauseOverlay = document.getElementById('pauseOverlay');
         const orientationOverlay = document.getElementById('orientation-overlay');
 
-function updateOrientationOverlay() {
-    if (!orientationOverlay) return;
-    const isPortrait = window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
-    orientationOverlay.style.display = isPortrait ? "flex" : "none";
-}
+        function updateOrientationOverlay() {
+            if (!orientationOverlay) return;
+            const mm = window.matchMedia && window.matchMedia("(orientation: portrait)");
+            const byMM = mm ? mm.matches : false;
+            const bySize = window.innerHeight > window.innerWidth + 40;
+            const byScreen = screen.orientation && screen.orientation.type 
+                             ? screen.orientation.type.startsWith("portrait")
+                             : false;
+            const isPortrait = byMM || bySize || byScreen;
+            orientationOverlay.style.display = isPortrait ? "flex" : "none";
+        }
 
         let bonusTimeout = null;
-
-        highScoreEl.innerText = '$' + highScore;
+        highScoreEl.innerText = '$' + Number(highScore).toLocaleString();
 
         function createRoughnessTexture() {
             const canvas = document.createElement('canvas');
@@ -1083,13 +968,10 @@ function updateOrientationOverlay() {
             try { document.getElementById('bgIntro')?.load(); } catch(e) {}
             try { document.getElementById('bgMusic')?.load(); } catch(e) {}
             try { document.getElementById('bgEnd')?.load(); } catch(e) {}
-            // FIX: Usunięto ładowanie bgVideo
-            
+
             document.addEventListener('click', () => {
                 audioManager.init();
-                // FIX: Upewniamy się, że audio startuje po interakcji
                 audioManager.unlockAudio();
-                
                 if(!isPlaying && document.getElementById('bgIntro').paused && gameOverScreen.classList.contains('hidden')) {
                     audioManager.playIntro();
                 }
@@ -1098,7 +980,6 @@ function updateOrientationOverlay() {
                 }
             }, { once: true });
 
-            // Dodatkowy listener dla mobile touch
             document.addEventListener('touchstart', () => {
                 audioManager.init();
                 audioManager.unlockAudio();
@@ -1122,11 +1003,8 @@ function updateOrientationOverlay() {
             renderer.toneMappingExposure = 1.1;
             document.getElementById('game-container').appendChild(renderer.domElement);
 
-            // FIX: Usunięto CubeCamera i RenderTarget
-            
-            // FIX: Zmieniono materiał na MeshStandardMaterial (bez envMap = brak błędu WebGL)
             buildingMaterial = new THREE.MeshStandardMaterial({
-                color: 0x2c3e50, metalness: 0.6, roughness: 0.2, emissive: 0x000510,     
+                color: 0x2c3e50, metalness: 0.6, roughness: 0.2, emissive: 0x000510,
             });
 
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
@@ -1138,7 +1016,6 @@ function updateOrientationOverlay() {
             scene.add(sunLight);
             
             const geometry = new THREE.PlaneGeometry(300, 600);
-            // FIX: Materiał podłogi też zmieniony na bezpieczny
             const material = new THREE.MeshStandardMaterial({ 
                 color: 0x0a1128, roughness: 0.4, roughnessMap: createRoughnessTexture(), 
                 metalness: 0.4 
@@ -1182,37 +1059,28 @@ function updateOrientationOverlay() {
             }
 
             updateOrientationOverlay();
-window.addEventListener('orientationchange', updateOrientationOverlay);
-window.addEventListener('resize', updateOrientationOverlay);
+            window.addEventListener('orientationchange', updateOrientationOverlay);
+            window.addEventListener('resize', updateOrientationOverlay);
+            if (screen.orientation && screen.orientation.addEventListener) {
+                screen.orientation.addEventListener("change", updateOrientationOverlay);
+            }
             window.dispatchEvent(new Event('resize'));
         }
 
         function handleOrientation(event) {
-             if (!isPlaying || isPaused) return;
-
-    // gamma: przechył lewo/prawo w orientacji "portrait".
-    // w landscape bywa inaczej, dlatego zostawiamy Twoje mapowanie.
-    let tilt = event.gamma;
-
-    if (window.orientation === 90) tilt = -event.beta;
-    if (window.orientation === -90) tilt = event.beta;
-
-    // ✅ USTAWIENIA STEROWANIA:
-    const invert = true;      // <- jeśli jest "w złą stronę", zmień na true
-    const sensitivity = 9;    // <- im MNIEJ, tym BARDZIEJ czułe (wcześniej miałeś 30)
-
-    if (invert) tilt *= -1;
-
-    // martwa strefa, żeby nie pływało od mikro-ruchów
-    const deadZone = 1.2; // stopnie
-    if (Math.abs(tilt) < deadZone) tilt = 0;
-
-    // normalizacja 0..1
-    let normalized = (tilt / sensitivity) * 0.5 + 0.5;
-    normalized = Math.max(0, Math.min(1, normalized));
-
-    handleInput(normalized);
-}
+            if (!isPlaying || isPaused) return;
+            let tilt = event.gamma;
+            if (window.orientation === 90) tilt = -event.beta;
+            if (window.orientation === -90) tilt = event.beta;
+            const invert = true;
+            const sensitivity = 9;    // niżej = bardziej czułe
+            if (invert) tilt *= -1;
+            const deadZone = 1.2;
+            if (Math.abs(tilt) < deadZone) tilt = 0;
+            let normalized = (tilt / sensitivity) * 0.5 + 0.5;
+            normalized = Math.max(0, Math.min(1, normalized));
+            handleInput(normalized);
+        }
 
         function createPlayer() {
             player = new THREE.Group();
@@ -1307,7 +1175,7 @@ window.addEventListener('resize', updateOrientationOverlay);
 
         class Particle3D {
             constructor(x, y, z, color) {
-                const size = 0.15; // Mniejszy rozmiar zgodnie z życzeniem
+                const size = 0.15;
                 this.mesh = new THREE.Mesh(Assets.geometries.particle, new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.75, depthWrite: false }));
                 this.mesh.scale.set(size, size, size); this.mesh.position.set(x, y, z);
                 this.vel = new THREE.Vector3((Math.random()-0.5)*0.6, Math.random()*0.6, (Math.random()-0.5)*0.6);
@@ -1326,25 +1194,19 @@ window.addEventListener('resize', updateOrientationOverlay);
             if(obj.geometry && obj.geometry !== Assets.geometries.particle && obj.geometry !== Assets.geometries.building) try{ obj.geometry.dispose(); }catch(e){}
             if(obj.material) try{ obj.material.dispose(); }catch(e){}
         }
-
         function pushParticle(p){ if(particles.length >= MAX_PARTICLES){ const old = particles.shift(); if(old && old.mesh) safeDisposeMesh(old.mesh); } particles.push(p); }
         function pushBuilding(b){ if(sceneryObjects.length >= MAX_BUILDINGS){ const old = sceneryObjects.shift(); if(old) old.dispose(); } sceneryObjects.push(b); }
         function pushObstacle(o){ if(obstacles.length >= MAX_OBSTACLES){ const old = obstacles.shift(); if(old) old.dispose(); } obstacles.push(o); }
 
         function handleInput(normalizedX) {
             normalizedX = Math.max(0, Math.min(1, normalizedX));
+            const smooth = 0.18;
+            tiltNormSmoothed = tiltNormSmoothed + (normalizedX - tiltNormSmoothed) * smooth;
+            mousePosNorm = tiltNormSmoothed;
+            const target = (tiltNormSmoothed * trackWidth) - (trackWidth / 2);
+            if (player) player.targetX = target;
+        }
 
-    // ✅ wygładzenie (im mniejsza liczba, tym bardziej płynnie)
-    const smooth = 0.18;
-    tiltNormSmoothed = tiltNormSmoothed + (normalizedX - tiltNormSmoothed) * smooth;
-
-    mousePosNorm = tiltNormSmoothed;
-    const target = (tiltNormSmoothed * trackWidth) - (trackWidth / 2);
-
-    if (player) player.targetX = target;
-}
-
-        // ✅ FIX #1: Nie robimy preventDefault na starcie (bo to potrafi zabić "click" na buttonie na Androidzie)
         window.addEventListener('touchmove', (e) => {
             if (!isPlaying) return;
             e.preventDefault();
@@ -1358,27 +1220,23 @@ window.addEventListener('resize', updateOrientationOverlay);
         }, { passive: false });
 
         window.addEventListener('mousemove', (e) => {
-    if (!isPlaying) return;
-
-    const sens = 0.008; // <- TU masz swoją czułość (zostawiłem Twoje 0.008)
-
-    if (document.pointerLockElement === document.body) {
-        mousePosNorm += e.movementX * sens;
-    } else {
-        // bez pointer lock: licz delta z clientX (żeby dalej było "intensywnie")
-        if (lastMouseX === null) lastMouseX = e.clientX;
-        const dx = e.clientX - lastMouseX;
-        lastMouseX = e.clientX;
-        mousePosNorm += dx * sens;
-    }
-
-    mousePosNorm = Math.max(0, Math.min(1, mousePosNorm));
-    handleInput(mousePosNorm);
-});
+            if (!isPlaying) return;
+            const sens = 0.008;
+            if (document.pointerLockElement === document.body) {
+                mousePosNorm += e.movementX * sens;
+            } else {
+                if (lastMouseX === null) lastMouseX = e.clientX;
+                const dx = e.clientX - lastMouseX;
+                lastMouseX = e.clientX;
+                mousePosNorm += dx * sens;
+            }
+            mousePosNorm = Math.max(0, Math.min(1, mousePosNorm));
+            handleInput(mousePosNorm);
+        });
 
         window.addEventListener('mouseleave', () => { lastMouseX = null; });
-window.addEventListener('mouseenter', () => { lastMouseX = null; });
-document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
+        window.addEventListener('mouseenter', () => { lastMouseX = null; });
+        document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') { if (isPlaying) pauseGame(); else if (isPaused) resumeGame(); return; }
@@ -1389,12 +1247,12 @@ document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
         });
 
         window.addEventListener('resize', () => {
-    if (!camera || !renderer) return;  // ✅ FIX: mobile potrafi odpalić resize zanim init skończy
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-});
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        });
 
         function updateScoreDisplay() {
             score = coinScore + timeScore;
@@ -1435,27 +1293,24 @@ document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
         }
 
         function requestFullScreen() {
-    const el = document.documentElement;
-    if (el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {});
-    } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-    }
-}
+            const el = document.documentElement;
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (isIOS) return; // iOS Safari/PWA nie wspiera prawdziwego fullscreen; PWA i tak jest standalone
+            const req = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (req) { try { req.call(el); } catch(e) {} }
+        }
 
         function startGame() {
-
-             requestFullScreen(); // ⬅⬅⬅ DOKŁADNIE TU
-            
+            requestFullScreen();
             if (window.matchMedia && window.matchMedia('(pointer:fine)').matches) document.body.requestPointerLock();
             
-            // FIX: Odblokowanie audio przy starcie
             audioManager.init();
             audioManager.unlockAudio();
             audioManager.transitionToGame();
 
             document.body.style.cursor = 'none';
-            if(document.getElementById('bgVideo')) document.getElementById('bgVideo').pause();
+            const bgv = document.getElementById('bgVideo'); if (bgv) bgv.pause();
             obstacles.forEach(o => o.dispose()); obstacles = [];
             sceneryObjects.forEach(s => s.dispose()); sceneryObjects = [];
             score = 0; coinScore = 0; timeScore = 0; coinStreak = 0; dodgeStreak = 0;
@@ -1467,8 +1322,6 @@ document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
             if (isFirstLaunch) {
                 const warmupOverlay = document.getElementById('warmupOverlay'); const barFill = document.getElementById('warmupBarFill');
                 warmupOverlay.classList.remove('hidden'); isPlaying = true; invulnerableUntil = performance.now() + 7000; 
-                
-                // FIX: Szybsze ładowanie (1s)
                 let progress = 0; const interval = setInterval(() => { progress += 4; if(progress > 100) progress = 100; barFill.style.width = progress + '%'; }, 50);
                 setTimeout(() => { clearInterval(interval); warmupOverlay.style.opacity = '0'; setTimeout(() => { warmupOverlay.classList.add('hidden'); isFirstLaunch = false; }, 500); }, 1000);
             } else { gameInCountdown = true; runCountdown(() => { isPlaying = true; invulnerableUntil = performance.now() + 1000; }); }
@@ -1504,16 +1357,13 @@ document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
                 if (pBox.intersectsBox(oBox)) {
                     if (nowPerf < invulnerableUntil && (obs.type === 1 || obs.type === 2)) continue;
 
-                    if (obs.type === 0) { // MONETA (DOLAR)
+                    if (obs.type === 0) { // MONETA
                         coinScore += 1000; 
                         audioManager.playCoin(); 
                         if(navigator.vibrate) navigator.vibrate(20); 
-
-                        // EFEKT CZĄSTECZEK (ZIELONY)
                         for(let k=0; k<12; k++) {
                             pushParticle(new Particle3D(obs.mesh.position.x, obs.mesh.position.y, obs.mesh.position.z, 0x39FF14));
                         }
-
                         if (++coinStreak >= 5) { 
                             coinStreak = 0; 
                             coinScore += 5000; 
@@ -1523,29 +1373,25 @@ document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
                         obs.dispose(); 
                         obstacles.splice(i, 1); 
                         gameSpeed = Math.min(maxSpeed, gameSpeed + 0.005);
-                    } else if (obs.type === 3) { // DIAMENT (MAGNES)
+                    } else if (obs.type === 3) { // DIAMENT
                         magnetActive = true; 
                         magnetTimer = Date.now() + 10000; 
                         showBonus("HOSSA! KAPITAŁ PŁYNIE!", "#00ffff"); 
                         audioManager.playPowerUp();
-
-                        // EFEKT CZĄSTECZEK (CYJAN) - WYBUCH
                         for(let k=0; k<25; k++) {
                             pushParticle(new Particle3D(obs.mesh.position.x, obs.mesh.position.y, obs.mesh.position.z, 0x00ffff));
                         }
-
                         obs.dispose(); 
                         obstacles.splice(i, 1);
                     } else { // PRZESZKODA
                         audioManager.playCrash(); 
                         audioManager.transitionToGameOver(); 
-                        document.exitPointerLock();
+                        if (document.exitPointerLock) { try { document.exitPointerLock(); } catch(e) {} }
                         if(navigator.vibrate) navigator.vibrate(200); 
                         document.body.style.cursor = 'default';
                         isPlaying = false; 
                         isPaused = false;
 
-                        // EFEKT CZĄSTECZEK PRZY CRASHU (CZERWONY)
                         for(let k=0; k<30; k++) {
                             pushParticle(new Particle3D(player.position.x, player.position.y + 1, player.position.z, 0xff0000));
                         }
@@ -1579,20 +1425,16 @@ document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
             if (isPlaying && !isPaused) {
                 if (gameSpeed < maxSpeed) gameSpeed += (isMobile ? 0.00012 : 0.0002); updateSpeedBar();
                 if(ground && ground.material.roughnessMap) ground.material.roughnessMap.offset.y -= gameSpeed * 0.01;
-                
-                // FIX: Usunięto cubeCamera.update() - brak WebGL Loop
 
                 if (magnetActive) {
                     if (Date.now() > magnetTimer) magnetActive = false;
                     else {
-                        // Przyciąganie monet
                         obstacles.forEach(obs => { 
                             if (obs.type === 0 && obs.mesh.position.z > -60) { 
                                 const dx = player.position.x - obs.mesh.position.x; 
                                 if (Math.abs(dx) < 30) obs.mesh.position.x += dx * 0.15; 
                             } 
                         });
-                        // FIX: Ciągła aura cząsteczek przy aktywnym diamencie
                         if (Math.random() < 0.3) {
                             pushParticle(new Particle3D(
                                 player.position.x + (Math.random()-0.5), 
@@ -1603,86 +1445,84 @@ document.addEventListener('pointerlockchange', () => { lastMouseX = null; });
                         }
                     }
                 }
-// --- ruch X + tilt JAK W BULL_RUNNER.html ---
-player.position.x += (player.targetX - player.position.x) * 0.2;
 
-// tilt bazuje na różnicy między pozycją a targetem (to daje ten “miękki” look)
-const tilt = (player.position.x - player.targetX) * 0.08;
-
-player.rotation.z = -tilt;
-player.rotation.y = -tilt * 0.3;
-
-// --- światło “podąża” za przechyłem (cień/shine jak w referencji) ---
-const backL = window.playerLight;
-if (backL) {
-    const side = THREE.MathUtils.clamp(-tilt * 10, -2.5, 2.5);
-    backL.position.set(player.position.x + side, 3.8, player.position.z + 3.2);
-}
-
-const spotL = window.bullSpot;
-if (spotL) {
-    const side2 = THREE.MathUtils.clamp(-tilt * 14, -3.0, 3.0);
-    spotL.position.set(player.position.x + side2, 8.5, player.position.z + 6.0);
-    spotL.intensity = 0.85 + Math.min(0.35, Math.abs(tilt) * 2.0);
-}
-
-const humpL = window.humpSpot;
-const humpT = window.humpTarget;
-if (humpL && humpT) {
-    const side3 = THREE.MathUtils.clamp(-tilt * 16, -3.5, 3.5);
-
-    if (player.hump) {
-        player.hump.getWorldPosition(humpT.position);
-    } else {
-        humpT.position.set(player.position.x, 2.0, player.position.z - 0.3);
-    }
-
-    humpL.position.set(player.position.x + side3, 5.6, player.position.z + 4.0);
-    humpL.intensity = 0.85 + Math.min(0.45, Math.abs(tilt) * 2.2);
-}
-                if (player.head) player.head.rotation.x = Math.sin(Date.now() * 0.01) * 0.1;
-                if (player.legs) { runningCycle += gameSpeed * 0.2; player.legs[0].rotation.x = Math.sin(runningCycle); player.legs[1].rotation.x = Math.cos(runningCycle); player.legs[2].rotation.x = Math.cos(runningCycle); player.legs[3].rotation.x = Math.sin(runningCycle); player.position.y = Math.abs(Math.sin(runningCycle)) * 0.1; }
-                if (++spawnTimer > 45 / gameSpeed) { spawnTimer = 0; const r = Math.random(); let t = 1; if (r > 0.95 && !magnetActive) t = 3; else if (r > 0.55) t = 0; else if (r < 0.25) t = 2; pushObstacle(new Obstacle3D(t)); }
-                if (++sceneryTimer > 15 / gameSpeed) { sceneryTimer = 0; pushBuilding(new Building()); }
-                for (let i = obstacles.length - 1; i >= 0; i--) {
-                    obstacles[i].update(gameSpeed);
-                    if (obstacles[i].mesh.position.z > 2 && !obstacles[i].passed && !obstacles[i].markedForDeletion) {
-                        obstacles[i].passed = true;
-                        if (obstacles[i].type === 1 || obstacles[i].type === 2) if (++dodgeStreak >= 10) { dodgeStreak = 0; score += 1000; showBonus("UNIKNĄŁEŚ BESSY! +$1000", "#ff0055"); }
-                    }
-                    if (obstacles[i].markedForDeletion) { if (obstacles[i].type === 0) coinStreak = 0; obstacles[i].dispose(); obstacles.splice(i, 1); timeScore += 100; updateScoreDisplay(); }
+                spawnTimer += dt;
+                sceneryTimer += dt;
+                if (sceneryTimer > 160) {
+                    sceneryTimer = 0;
+                    pushBuilding(new Building());
                 }
-                for (let i = sceneryObjects.length - 1; i >= 0; i--) { sceneryObjects[i].update(gameSpeed); if (sceneryObjects[i].markedForDeletion) { sceneryObjects[i].dispose(); sceneryObjects.splice(i, 1); } }
+
+                const spawnEvery = Math.max(450 - score * 0.02, 220);
+                if (spawnTimer > spawnEvery) {
+                    spawnTimer = 0;
+                    const r = Math.random();
+                    if (r < 0.58) pushObstacle(new Obstacle3D(0)); // coin
+                    else if (r < 0.78) pushObstacle(new Obstacle3D(1)); // bear
+                    else if (r < 0.92) pushObstacle(new Obstacle3D(2)); // arrow
+                    else pushObstacle(new Obstacle3D(3)); // gem
+                }
+
+                obstacles.forEach(o => o.update(gameSpeed));
+                sceneryObjects.forEach(o => o.update(gameSpeed));
+                particles = particles.filter(p => p.update());
+
+                player.position.x += (player.targetX - player.position.x) * 0.18;
+                player.position.z = 0;
+                player.position.y = 1.2 + Math.sin(runningCycle * 0.4) * 0.08;
+                runningCycle += dt * 0.03;
+                const legSwing = Math.sin(runningCycle) * 0.6;
+                player.legs.forEach((leg, idx) => {
+                    const phase = idx % 2 === 0 ? legSwing : -legSwing;
+                    leg.rotation.x = phase;
+                });
+                player.tail.rotation.x = Math.sin(runningCycle * 1.5) * 0.4 - 0.3;
+                player.hump.rotation.x = -0.2 + Math.sin(runningCycle * 0.8) * 0.04;
+                player.head.rotation.x = Math.sin(runningCycle * 0.5) * 0.05;
+
+                timeScore += Math.floor(dt * 0.12 * (1 + gameSpeed * 0.35));
+                updateScoreDisplay();
+
+                const nowFPS = fpsWindow.length ? fpsWindow.reduce((a,b)=>a+b,0)/fpsWindow.length : 60;
+                if (nowFPS < 35 && performance.now() > qualityCooldownUntil && qualityLevel > 0) {
+                    applyQuality(qualityLevel - 1);
+                    qualityCooldownUntil = performance.now() + 8000;
+                } else if (nowFPS > 55 && qualityLevel < 2 && performance.now() > qualityCooldownUntil) {
+                    applyQuality(qualityLevel + 1);
+                    qualityCooldownUntil = performance.now() + 8000;
+                }
+
+                if (magnetActive && Math.random() < 0.2) {
+                    pushParticle(new Particle3D(
+                        player.position.x + (Math.random()-0.5), 
+                        player.position.y + 1 + (Math.random()-0.5), 
+                        player.position.z, 
+                        0x00ffff
+                    ));
+                }
+
                 checkCollisions();
             }
-            for (let i = particles.length - 1; i >= 0; i--) if (!particles[i].update()) particles.splice(i, 1);
+
+            obstacles = obstacles.filter(o => !o.markedForDeletion);
+            sceneryObjects = sceneryObjects.filter(o => !o.markedForDeletion);
+
             renderer.render(scene, camera);
         }
-        
+
         document.getElementById('startBtn').addEventListener('click', startGame);
-        document.getElementById('restartBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            gameOverScreen.classList.add('hidden');
+            startGame();
+        });
         document.getElementById('menuBtn').addEventListener('click', () => {
-            audioManager.transitionToMenu(); if(document.getElementById('bgVideo')) document.getElementById('bgVideo').play();
-            obstacles.forEach(o => o.dispose()); obstacles = [];
-            gameOverScreen.classList.add('hidden'); startScreen.classList.remove('hidden');
+            gameOverScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            document.body.style.cursor = 'default';
+            audioManager.transitionToMenu();
         });
 
-        window.onload = init;
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
