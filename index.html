@@ -732,7 +732,7 @@
                 
                 this.materials.coin = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
                 this.materials.bear = new THREE.MeshStandardMaterial({ color: 0x880000, roughness: 0.5, metalness: 0.1, emissive: 0x330000, emissiveIntensity: 0.05 });
-                this.materials.arrow = new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.9, emissive: 0x550000, emissiveIntensity: 0.3 });
+                this.materials.arrow = new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.9, emissive: 0x550000, emissiveIntensity: 0.6 });
                 this.materials.gem = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0xffff, emissiveIntensity: 1.2, metalness: 1.0, roughness: 0.0 });
             }
         };
@@ -1033,8 +1033,8 @@ function updateOrientationOverlay() {
     const byMM = window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
     const bySize = window.innerHeight > window.innerWidth + 40;
     const byScreen = screen.orientation && screen.orientation.type
-                     ? screen.orientation.type.startsWith("portrait")
-                     : false;
+                    ? screen.orientation.type.startsWith("portrait")
+                    : false;
     const isPortrait = byMM || bySize || byScreen;
     orientationOverlay.style.display = isPortrait ? "flex" : "none";
 }
@@ -1154,7 +1154,7 @@ function updateOrientationOverlay() {
             scene.add(gridHelper);
 
             createPlayer();
-            const playerLight = new THREE.PointLight(0xffff, 0.65, 18);
+            const playerLight = new THREE.PointLight(0xffffff, 0.9, 18);
             playerLight.position.set(0, 3.8, 3.2);
             playerLight.layers.set(1);
             scene.add(playerLight);
@@ -1285,7 +1285,7 @@ window.addEventListener('resize', updateOrientationOverlay);
                     const cone = new THREE.Mesh(Assets.geometries.arrowCone, Assets.materials.arrow); cone.rotation.x = Math.PI; cone.position.y = 0.6; this.mesh.add(cone);
                     const box = new THREE.Mesh(Assets.geometries.arrowBox, Assets.materials.arrow); box.position.y = 1.4; this.mesh.add(box);
                     this.mesh.position.set(xPos, 0.5, -110);
-                    const redLight = new THREE.PointLight(0xff0000, 1.0, 5); redLight.position.y = 1; this.mesh.add(redLight);
+                    const redLight = new THREE.PointLight(0xff0000, 1.4, 6); redLight.position.y = 1; this.mesh.add(redLight);
                 } else if (type === 3) {
                     this.mesh = new THREE.Group();
                     const gem = new THREE.Mesh(Assets.geometries.gem, Assets.materials.gem); gem.position.y = 1.5; this.mesh.add(gem);
