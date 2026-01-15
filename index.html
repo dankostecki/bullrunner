@@ -733,7 +733,7 @@
                 this.materials.coin = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
                 this.materials.bear = new THREE.MeshStandardMaterial({ color: 0x880000, roughness: 0.5, metalness: 0.1, emissive: 0x330000, emissiveIntensity: 0.05 });
                 this.materials.arrow = new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.9, emissive: 0x550000, emissiveIntensity: 0.6 });
-                this.materials.gem = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0xffff, emissiveIntensity: 1.2, metalness: 1.0, roughness: 0.0 });
+                this.materials.gem = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0xffffff, emissiveIntensity: 1.2, metalness: 1.0, roughness: 0.0 });
             }
         };
 
@@ -905,7 +905,7 @@
                     const b = new THREE.Mesh(Assets.geometries.building, buildingMaterial);
                     warmGroup.add(b);
                 }
-                const particle = new THREE.Mesh(Assets.geometries.particle, new THREE.MeshBasicMaterial({color: 0xffff}));
+                const particle = new THREE.Mesh(Assets.geometries.particle, new THREE.MeshBasicMaterial({color: 0xffffff}));
                 warmGroup.add(particle);
                 scene.add(warmGroup);
                 renderer.compile(scene, camera);
@@ -1129,7 +1129,7 @@ function updateOrientationOverlay() {
                 color: 0x2c3e50, metalness: 0.6, roughness: 0.2, emissive: 0x000510,     
             });
 
-            const ambientLight = new THREE.AmbientLight(0xffff, 0.4);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
             scene.add(ambientLight);
             const sunLight = new THREE.DirectionalLight(0xffdfba, 2.0); 
             sunLight.position.set(-20, 50, 20); 
@@ -1160,14 +1160,14 @@ function updateOrientationOverlay() {
             scene.add(playerLight);
             window.playerLight = playerLight;
 
-            const bullSpot = new THREE.SpotLight(0xffff, 0.9, 35, Math.PI * 0.22, 0.35, 1.2);
+            const bullSpot = new THREE.SpotLight(0xffffff, 0.9, 35, Math.PI * 0.22, 0.35, 1.2);
             bullSpot.position.set(0, 8.5, 6.0);
             bullSpot.layers.set(1);
             bullSpot.target = player;
             scene.add(bullSpot); scene.add(bullSpot.target);
             window.bullSpot = bullSpot;
 
-            const humpSpot = new THREE.SpotLight(0xffff, 0.95, 22, Math.PI * 0.16, 0.35, 1.25);
+            const humpSpot = new THREE.SpotLight(0xffffff, 0.95, 22, Math.PI * 0.16, 0.35, 1.25);
             humpSpot.layers.set(1); humpSpot.position.set(0, 5.4, 4.2); 
             const humpTarget = new THREE.Object3D(); humpTarget.position.set(0, 2.0, -0.3); 
             scene.add(humpTarget); humpSpot.target = humpTarget;
@@ -1671,3 +1671,4 @@ if (humpL && humpT) {
     </script>
 </body>
 </html>
+
